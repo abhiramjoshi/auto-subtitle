@@ -4,7 +4,7 @@ import whisper
 import argparse
 import warnings
 import tempfile
-from .utils import filename, str2bool, write_srt
+from utils import filename, str2bool, write_srt
 
 
 def main():
@@ -56,15 +56,20 @@ def main():
 
     for path, srt_path in subtitles.items():
         out_path = os.path.join(output_dir, f"{filename(path)}.mp4")
-
+        print(path)
+        print(srt_path)
         print(f"Adding subtitles to {filename(path)}...")
 
         video = ffmpeg.input(path)
         audio = video.audio
-
-        ffmpeg.concat(
-            video.filter('subtitles', srt_path, force_style="OutlineColour=&H40000000,BorderStyle=3"), audio, v=1, a=1
-        ).output(out_path).run(quiet=True, overwrite_output=True)
+        try:
+            ffmpeg.concat(
+                video.filter('subtitles', srt_path, force_style="OutlineColour=&H40000000,BorderStyle=3,Italic=1,Spacing=0.8"), audio, v=1, a=1
+            ).output(out_path).run(quiet=True, overwrite_output=True, capture_stdout=True, capture_stderr=True)
+        except ffmpeg._run.Error as e:
+            print('stdout:', e.stdout.decode('utf8'))
+            print('stderr:', e.stderr.decode('utf8'))
+            raise e
 
         print(f"Saved subtitled video to {os.path.abspath(out_path)}.")
 
